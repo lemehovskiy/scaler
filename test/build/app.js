@@ -7073,7 +7073,24 @@ __webpack_require__(68);
 
 __webpack_require__(108);
 
-$(document).ready(function () {});
+$(document).ready(function () {
+
+    $('.title').scaler({
+        rules: [{
+            viewport_from: 1600,
+            viewport_to: 1400,
+            scale_from: 1,
+            scale_to: 0.5,
+            sticky: false
+        }, {
+            viewport_from: 1200,
+            viewport_to: 1000,
+            scale_from: 1,
+            scale_to: 0.5,
+            sticky: true
+        }]
+    });
+});
 
 /***/ }),
 /* 67 */
@@ -12111,27 +12128,94 @@ if ( !noGlobal ) {
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 (function ($) {
-    var Scaler = function Scaler(element, options) {
-        _classCallCheck(this, Scaler);
+    var Scaler = function () {
+        function Scaler(element, options) {
+            _classCallCheck(this, Scaler);
 
-        var self = this;
+            var self = this;
 
-        //extend by function call
-        self.settings = $.extend(true, {
+            //extend by function call
+            self.settings = $.extend(true, {
+                resize_delay: 300
+            }, options);
 
-            test_property: false
+            self.$element = $(element);
 
-        }, options);
+            //extend by data options
+            self.data_options = self.$element.data('scaler');
+            self.settings = $.extend(true, self.settings, self.data_options);
 
-        self.$element = $(element);
+            self.init();
+        }
 
-        //extend by data options
-        self.data_options = self.$element.data('scaler');
-        self.settings = $.extend(true, self.settings, self.data_options);
-    };
+        _createClass(Scaler, [{
+            key: 'init',
+            value: function init() {
+
+                var self = this;
+
+                $(window).on('resize', function () {
+                    if (this.resizeTO) clearTimeout(this.resizeTO);
+                    this.resizeTO = setTimeout(function () {
+                        $(this).trigger('resizeEnd.scaler');
+                    }, self.settings.resize_delay);
+                });
+
+                self.on_resize();
+
+                $(window).on('resizeEnd.scaler', function () {
+                    self.on_resize();
+                });
+            }
+        }, {
+            key: 'on_resize',
+            value: function on_resize() {
+                var self = this;
+
+                var ww = $(window).width();
+
+                var scale_val = 1;
+
+                self.settings.rules.forEach(function (rule) {
+
+                    if (ww < rule.viewport_from && ww > rule.viewport_to) {
+
+                        var viewport_distance = rule.viewport_from - rule.viewport_to;
+
+                        var scale_distance = rule.scale_from - rule.scale_to;
+
+                        scale_val = scale_distance * ((ww - rule.viewport_to) / viewport_distance) + rule.scale_to;
+                    } else if (rule.sticky && ww < rule.viewport_to) {
+                        scale_val = rule.scale_to;
+                    } else if (!rule.sticky && ww < rule.viewport_to) {
+                        scale_val = rule.scale_from;
+                    }
+                });
+
+                self.set_scale(scale_val);
+            }
+        }, {
+            key: 'set_scale',
+            value: function set_scale(val) {
+                var self = this;
+
+                self.$element.css({
+                    '-webkit-transform': 'scale(' + val + ')',
+                    '-moz-transform': 'scale(' + val + ')',
+                    '-ms-transform': 'scale(' + val + ')',
+                    '-o-transform': 'scale(' + val + ')',
+                    'transform': 'scale(' + val + ')'
+                });
+            }
+        }]);
+
+        return Scaler;
+    }();
 
     $.fn.scaler = function () {
         var $this = this,
