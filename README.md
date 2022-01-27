@@ -1,6 +1,8 @@
 scaler
 -------
 
+[Demo](https://lemehovskiy.github.io/scaler/test/)
+
 ### Browser support
 
 * Chrome
